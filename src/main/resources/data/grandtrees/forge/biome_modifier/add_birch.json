@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_birch",
+  "features": "grandtrees:birch",
+  "step": "vegetal_decoration"
+}

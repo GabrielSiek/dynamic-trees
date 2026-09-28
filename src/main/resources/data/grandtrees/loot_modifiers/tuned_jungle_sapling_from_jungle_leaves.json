@@ -1,0 +1,14 @@
+{
+  "type": "grandtrees:add_item",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:blocks/jungle_leaves"
+    },
+    {
+      "condition": "minecraft:random_chance",
+      "chance": 0.01
+    }
+  ],
+  "item": "grandtrees:tuned_jungle_sapling"
+}

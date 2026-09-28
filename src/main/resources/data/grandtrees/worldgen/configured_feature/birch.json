@@ -1,0 +1,12 @@
+{
+  "type": "grandtrees:grand_tree",
+  "config": {
+    "species": "birch",
+    "sizes": {
+      "small": 1,
+      "medium": 4,
+      "big": 3,
+      "large": 1
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_jungle",
+  "features": "grandtrees:jungle",
+  "step": "vegetal_decoration"
+}

@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "entries": [
+    "grandtrees:tuned_oak_sapling_from_oak_leaves",
+    "grandtrees:tuned_birch_sapling_from_birch_leaves",
+    "grandtrees:tuned_spruce_sapling_from_spruce_leaves",
+    "grandtrees:tuned_jungle_sapling_from_jungle_leaves",
+    "grandtrees:tuned_acacia_sapling_from_acacia_leaves",
+    "grandtrees:tuned_dark_oak_sapling_from_dark_oak_leaves",
+    "grandtrees:tuned_cherry_sapling_from_cherry_leaves"
+  ]
+}
