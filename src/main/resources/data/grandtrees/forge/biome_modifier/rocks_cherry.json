@@ -1,0 +1,8 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_cherry",
+  "features": [
+    "grandtrees:cherry_rock"
+  ],
+  "step": "local_modifications"
+}

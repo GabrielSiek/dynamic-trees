@@ -19,6 +19,10 @@ public final class TwistedFantasyStyle implements TreeStyle {
 
     @Override
     public void generate(TreeContext c) {
+        if (c.size == TreeSize.SMALL) {
+            small(c);
+            return;
+        }
         TreeParams p = c.params;
         double tr = c.size == TreeSize.SMALL ? 0.5 : p.trunkRadius() * 1.15;
         double trunkH = p.height() * c.rand(0.5, 0.62);
@@ -65,10 +69,35 @@ public final class TwistedFantasyStyle implements TreeStyle {
         Shapes.limb(c, top, top.add(0, cr * 0.6, 0), Math.max(0.5, tr * 0.5), 0.5, Kind.LOG);
         Shapes.blob(c, top.add(0, cr * 0.5, 0), cr * 1.35, cr * 0.65, cr * 1.35, 0.35, 0.3);
 
+        StyleUtil.coverTopWood(c, c.base.y + trunkH * 0.5);
+
         Shapes.caveVines(c, 0.05, 2 + c.size.ordinal(), 0.3);
         Shapes.sideVines(c, 0.02, 2 + c.size.ordinal());
     }
 
+
+    /**
+     * Small dark oak: a short trunk with one twist under a single full, low dome of leaves, with a
+     * few glow berries hanging below.
+     */
+    private static void small(TreeContext c) {
+        int trunkH = c.randInt(3, 5);
+        Vec3 kink = c.base.add(Shapes.horizontal(c.randAngle()).scale(c.rand(0.6, 1.1))).add(0, trunkH * 0.5, 0);
+        Vec3 top = new Vec3(c.base.x + c.rand(-0.6, 0.6), c.base.y + trunkH, c.base.z + c.rand(-0.6, 0.6));
+        Shapes.path(c, List.of(c.base, kink, top), 0.5, 0.5, Kind.LOG);
+
+        int limbs = c.randInt(2, 3);
+        double a0 = c.randAngle();
+        for (int i = 0; i < limbs; i++) {
+            Vec3 dir = Shapes.horizontal(a0 + i * TreeContext.TAU / limbs + c.rand(-0.4, 0.4));
+            Shapes.limb(c, top.add(0, -1, 0), top.add(dir.scale(c.rand(1.3, 2.0))).add(0, 0.3, 0), 0.5, 0.5, Kind.LOG);
+        }
+        double r = c.rand(3.0, 3.6);
+        Shapes.blob(c, top.add(0, 0.8, 0), r, c.rand(1.9, 2.3), r, 0.55, 0.12);
+        StyleUtil.coverTopWood(c, top.y - 1);
+
+        Shapes.caveVines(c, 0.05, 2, 0.3);
+    }
     private static List<Vec3> spiral(TreeContext c, double trunkH, double turns, double phase, double swing, Vec3 lean) {
         List<Vec3> pts = new ArrayList<>();
         int n = 8;

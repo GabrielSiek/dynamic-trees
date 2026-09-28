@@ -1,8 +1,8 @@
 package com.grandtrees.dev;
 
 import com.grandtrees.GrandTrees;
-import com.grandtrees.block.TunedSaplingBlock;
-import com.grandtrees.registry.ModBlocks;
+import com.grandtrees.item.TreeFelling;
+import com.grandtrees.registry.ModItems;
 import com.grandtrees.template.TreeTemplate;
 import com.grandtrees.tree.GrandTreeGrower;
 import com.grandtrees.tree.SizeDetector;
@@ -19,12 +19,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
@@ -101,7 +98,7 @@ public final class GrandTreesGameTests {
         }
 
         Stats stats = scan(level, center, size);
-        TreePreview.render(level, center, size.maxRadius + 3, GROUND - 4, GROUND + 75,
+        TreePreview.render(level, center, size.maxRadius + 3, GROUND - 4, GROUND + previewHeight(size),
                 species.getSerializedName() + "_" + size.getSerializedName());
         GrandTrees.LOGGER.info("[gametest] {} {}: {} logs, {} leaves, {} persistent, {} decaying, {} ms",
                 species.getSerializedName(), size.getSerializedName(), stats.logs, stats.leaves, stats.persistent,
@@ -110,18 +107,54 @@ public final class GrandTreesGameTests {
             helper.fail("tree has no logs or leaves");
         } else if (stats.decaying > 0) {
             helper.fail(stats.decaying + " leaves would decay");
+        } else if (COVERED_CROWNS.contains(species) && topWood(level, center, size) > 0) {
+            helper.fail(topWood(level, center, size) + " columns show wood on top of the crown");
         } else {
             helper.succeed();
         }
     }
 
-    /** A 5x5 sapling pattern grown through the sapling block itself; all saplings must be used up. */
+    /** Species whose crowns must never show wood from above. */
+    private static final Set<TreeSpecies> COVERED_CROWNS = Set.of(TreeSpecies.SPRUCE, TreeSpecies.ACACIA, TreeSpecies.DARK_OAK);
+
+    /** Columns whose highest block is a log (wood visible from above), ignoring the root flare at the base. */
+    private static int topWood(ServerLevel level, BlockPos center, TreeSize size) {
+        int r = size.maxRadius + 3, count = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -r; x <= r; x++)
+            for (int z = -r; z <= r; z++)
+                for (int y = GROUND + 75; y >= GROUND; y--) {
+                    BlockState s = level.getBlockState(m.set(center.getX() + x, y, center.getZ() + z));
+                    if (s.isAir() || s.is(Blocks.VINE) || s.is(Blocks.CAVE_VINES) || s.is(Blocks.CAVE_VINES_PLANT)) continue;
+                    if (s.is(BlockTags.LOGS) && y >= GROUND + 3) {
+                        count++;
+                        GrandTrees.LOGGER.info("[gametest] wood on top at {}", m.immutable());
+                    }
+                    break;
+                }
+        return count;
+    }
+
+    private static int previewHeight(TreeSize size) {
+        return switch (size) {
+            case SMALL -> 14;
+            case MEDIUM -> 22;
+            case BIG -> 32;
+            case LARGE -> 44;
+            case EXTRA_LARGE -> 75;
+        };
+    }
+
+    /**
+     * A 5x5 vanilla sapling pattern grown through the sapling block itself (so through Forge's
+     * sapling event); all saplings must be used up.
+     */
     @GameTest(template = TEMPLATE, timeoutTicks = 200)
     public static void saplingPatternGrowsExtraLarge(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos center = new BlockPos(3000, GROUND, 3000);
         platform(level, center, 30);
-        TunedSaplingBlock block = ModBlocks.SAPLINGS.get(TreeSpecies.OAK).get();
+        SaplingBlock block = (SaplingBlock) Blocks.OAK_SAPLING;
         BlockState sapling = block.defaultBlockState().setValue(SaplingBlock.STAGE, 1);
         for (int x = -2; x <= 2; x++)
             for (int z = -2; z <= 2; z++)
@@ -154,7 +187,7 @@ public final class GrandTreesGameTests {
         BlockPos b = new BlockPos(3300, GROUND, 3000);
         platform(level, a, 6);
         platform(level, b, 6);
-        TunedSaplingBlock block = ModBlocks.SAPLINGS.get(TreeSpecies.SPRUCE).get();
+        Block block = Blocks.SPRUCE_SAPLING;
         BlockState s = block.defaultBlockState();
         for (int x = 0; x < 4; x++)
             for (int z = 0; z < 4; z++)
@@ -228,35 +261,101 @@ public final class GrandTreesGameTests {
         else helper.succeed();
     }
 
-    /** Every sapling has a sapling + bone meal recipe and a loot table. */
-    @GameTest(template = TEMPLATE, timeoutTicks = 20)
-    public static void recipesAndLootTables(GameTestHelper helper) {
+    /**
+     * A vanilla 2x2 dark oak grows a Medium grand tree instead of the vanilla dark oak (grand trees
+     * are recognised by their *_wood blocks, which vanilla trees never place).
+     */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void vanillaDarkOakGrowsGrandTree(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        BlockPos at = new BlockPos(3700, GROUND, 3000);
+        platform(level, at, 30);
+        SaplingBlock block = (SaplingBlock) Blocks.DARK_OAK_SAPLING;
+        BlockState sapling = block.defaultBlockState().setValue(SaplingBlock.STAGE, 1);
+        for (int x = 0; x < 2; x++)
+            for (int z = 0; z < 2; z++)
+                level.setBlock(at.offset(x, 0, z), sapling, 3);
+        block.advanceTree(level, at, sapling, level.getRandom());
+
+        int wood = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -12; x <= 12; x++)
+            for (int z = -12; z <= 12; z++)
+                for (int y = -3; y <= 30; y++)
+                    if (level.getBlockState(m.set(at.getX() + x, at.getY() + y, at.getZ() + z)).is(Blocks.DARK_OAK_WOOD)) wood++;
+        if (level.getBlockState(at).is(block)) helper.fail("sapling did not grow");
+        else if (wood == 0) helper.fail("grew a vanilla dark oak, not a grand tree");
+        else helper.succeed();
+    }
+
+    /** Every decoration (fallen log, bush, rock) of every species places on flat ground; previews for review. */
+    @GameTestGenerator
+    public static Collection<TestFunction> placeEveryDecoration() {
+        List<TestFunction> tests = new ArrayList<>();
+        String[] kinds = {"fallen_log", "bush", "rock"};
         for (TreeSpecies species : TreeSpecies.values()) {
-            TunedSaplingBlock block = ModBlocks.SAPLINGS.get(species).get();
-            ResourceLocation id = new ResourceLocation(GrandTrees.MODID, ModBlocks.saplingName(species));
-            var recipe = level.getRecipeManager().byKey(id);
-            if (recipe.isEmpty()) {
-                helper.fail("missing recipe " + id);
-                return;
-            }
-            if (!recipe.get().getResultItem(level.registryAccess()).is(block.asItem())) {
-                helper.fail("recipe " + id + " makes the wrong item");
-                return;
-            }
-            var ingredients = recipe.get().getIngredients();
-            boolean hasSapling = ingredients.stream().anyMatch(i -> i.test(new ItemStack(species.vanillaSapling())));
-            boolean hasBoneMeal = ingredients.stream().anyMatch(i -> i.test(new ItemStack(Items.BONE_MEAL)));
-            if (!hasSapling || !hasBoneMeal) {
-                helper.fail("recipe " + id + " is not sapling + bone meal");
-                return;
-            }
-            if (level.getServer().getLootData().getLootTable(block.getLootTable()) == LootTable.EMPTY) {
-                helper.fail("missing loot table for " + id);
-                return;
+            for (int k = 0; k < kinds.length; k++) {
+                String id = species.getSerializedName() + "_" + kinds[k];
+                BlockPos at = new BlockPos(5000 + species.ordinal() * 40, GROUND, 5000 + k * 40);
+                tests.add(new TestFunction("grandtrees", "decor_" + id, TEMPLATE_ID, 100, 0, true,
+                        helper -> placeDecoration(helper, id, at)));
             }
         }
-        helper.succeed();
+        return tests;
+    }
+
+    private static void placeDecoration(GameTestHelper helper, String id, BlockPos at) {
+        ServerLevel level = helper.getLevel();
+        var registry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
+        var feature = registry.get(new net.minecraft.resources.ResourceLocation(GrandTrees.MODID, id));
+        if (feature == null) {
+            // Not every species has every decoration (no rocks in swamps, no bushes in cherry groves).
+            helper.succeed();
+            return;
+        }
+        platform(level, at, 12);
+        boolean placed = false;
+        for (int seed = 0; seed < 8 && !placed; seed++) {
+            placed = feature.place(level, level.getChunkSource().getGenerator(), net.minecraft.util.RandomSource.create(seed), at);
+        }
+        TreePreview.render(level, at, 8, GROUND - 3, GROUND + 8, "decor_" + id);
+        if (!placed) helper.fail(id + " did not place on flat grass");
+        else helper.succeed();
+    }
+
+    /** The Lumber Saw fells a whole Big oak, roots included; only the cut block itself is left. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void sawFellsWholeTree(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos at = new BlockPos(3800, GROUND, 3000);
+        platform(level, at, 30);
+        if (!GrandTreeGrower.tryGrow(level, at.offset(-1, 0, -1), 3, TreeSpecies.OAK, TreeSize.BIG, 5L, null,
+                GrandTreeGrower.noConsumables(), false)) {
+            helper.fail("tree did not grow: " + GrandTreeGrower.lastFailure());
+            return;
+        }
+        int before = scan(level, at, TreeSize.BIG).logs;
+        int felled = TreeFelling.fell(level, at.above(2), null, new ItemStack(ModItems.LUMBER_SAW.get()));
+        int after = scan(level, at, TreeSize.BIG).logs;
+        GrandTrees.LOGGER.info("[gametest] saw: {} logs, felled {}, {} left", before, felled, after);
+        if (after != 1) helper.fail(after + " logs left after felling (expected only the cut block)");
+        else helper.succeed();
+    }
+
+    /** Logs without natural leaves (a log cabin wall) are not felled. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 100)
+    public static void sawSparesLogBuildings(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos at = new BlockPos(3900, GROUND, 3000);
+        platform(level, at, 30);
+        for (int x = 0; x < 5; x++)
+            for (int y = 0; y < 4; y++)
+                level.setBlock(at.offset(x, y, 0), Blocks.OAK_LOG.defaultBlockState(), 3);
+        level.setBlock(at.offset(2, 4, 0), Blocks.OAK_LEAVES.defaultBlockState()
+                .setValue(BlockStateProperties.PERSISTENT, true), 3);
+        int felled = TreeFelling.fell(level, at.offset(2, 1, 0), null, new ItemStack(ModItems.LUMBER_SAW.get()));
+        if (felled != 0) helper.fail("felled " + felled + " logs of a wall");
+        else helper.succeed();
     }
 
     @GameTest(template = TEMPLATE, timeoutTicks = 2400)
@@ -287,7 +386,8 @@ public final class GrandTreesGameTests {
             return;
         }
         ChunkPos center = new ChunkPos(found.getFirst());
-        int woods = 0, persistent = 0, decaying = 0;
+        int woods = 0, grandLeaves = 0, vanillaLeaves = 0, persistent = 0, decaying = 0, rockBlocks = 0, mossCarpets = 0;
+        java.util.Map<String, Integer> vanillaKinds = new java.util.TreeMap<>();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int cx = -4; cx <= 4; cx++) {
             for (int cz = -4; cz <= 4; cz++) {
@@ -298,9 +398,18 @@ public final class GrandTreesGameTests {
                         for (int y = top; y > top - 70 && y > level.getMinBuildHeight(); y--) {
                             BlockState s = chunk.getBlockState(m.set(x, y, z));
                             if (s.is(wood)) woods++;
+                            if (s.is(Blocks.COBBLESTONE) || s.is(Blocks.MOSSY_COBBLESTONE)) rockBlocks++;
+                            if (s.is(Blocks.MOSS_CARPET)) mossCarpets++;
                             if (s.hasProperty(BlockStateProperties.DISTANCE)) {
                                 long world = BlockPos.asLong(chunk.getPos().getMinBlockX() + x, y, chunk.getPos().getMinBlockZ() + z);
-                                if (!PLACED_LEAVES.contains(world)) continue;
+                                if (!PLACED_LEAVES.contains(world)) {
+                                    if (level.getBiome(BlockPos.of(world)).is(biome) && !nearGround(chunk, m)) {
+                                        vanillaLeaves++;
+                                        vanillaKinds.merge(s.getBlock().getDescriptionId(), 1, Integer::sum);
+                                    }
+                                    continue;
+                                }
+                                grandLeaves++;
                                 if (s.getValue(BlockStateProperties.PERSISTENT)) persistent++;
                                 else if (s.getValue(BlockStateProperties.DISTANCE) >= 7) {
                                     decaying++;
@@ -315,11 +424,25 @@ public final class GrandTreesGameTests {
         BlockPos c = center.getMiddleBlockPosition(0);
         int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ());
         TreePreview.render(level, c.atY(surface), 72, surface - 20, surface + 60, preview);
-        GrandTrees.LOGGER.info("[gametest] {} at {}: {} {} blocks, {} persistent leaves, {} decaying leaves",
-                biome.location(), found.getFirst(), woods, wood, persistent, decaying);
+        // Vanilla leaves inside the biome itself are trees that should have been removed (a few can spill
+        // over from a neighbouring biome; bushes near the ground are ours and not counted).
+        GrandTrees.LOGGER.info("[gametest] {} at {}: {} {} blocks, {} grand leaves ({} persistent, {} decaying), "
+                        + "{} vanilla leaves in the biome {}, decorations: {} cobblestone blocks, {} moss carpets",
+                biome.location(), found.getFirst(), woods, wood, grandLeaves, persistent, decaying, vanillaLeaves, vanillaKinds,
+                rockBlocks, mossCarpets);
         if (woods == 0) helper.fail("no grand trees generated in " + biome.location());
         else if (decaying > 0) helper.fail(decaying + " grand-tree leaves would decay");
         else helper.succeed();
+    }
+
+    /** A leaf with solid ground at most 4 blocks below it (through leaves and logs) belongs to a bush. */
+    private static boolean nearGround(LevelChunk chunk, BlockPos leaf) {
+        for (int d = 1; d <= 4; d++) {
+            BlockState s = chunk.getBlockState(leaf.below(d));
+            if (s.isAir() || s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS) || s.canBeReplaced()) continue;
+            return true;
+        }
+        return false;
     }
 
     private static void platform(ServerLevel level, BlockPos center, int radius) {

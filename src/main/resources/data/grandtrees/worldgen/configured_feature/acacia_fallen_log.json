@@ -1,0 +1,16 @@
+{
+  "type": "grandtrees:fallen_log",
+  "config": {
+    "log": {
+      "Name": "minecraft:acacia_log",
+      "Properties": {
+        "axis": "y"
+      }
+    },
+    "min_length": 3,
+    "max_length": 6,
+    "moss_chance": 0,
+    "mushroom_chance": 0,
+    "stump_chance": 0.6
+  }
+}

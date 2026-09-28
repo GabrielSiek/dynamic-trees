@@ -13,6 +13,10 @@ public final class UmbrellaStyle implements TreeStyle {
 
     @Override
     public void generate(TreeContext c) {
+        if (c.size == TreeSize.SMALL) {
+            small(c);
+            return;
+        }
         TreeParams p = c.params;
         double tr = p.trunkRadius();
         // Acacias are wide rather than tall.
@@ -55,8 +59,38 @@ public final class UmbrellaStyle implements TreeStyle {
         }
         Vec3 crown = StyleUtil.leader(c, fork, span * c.rand(0.7, 0.95), tr * 0.5);
         pad(c, crown, padR * 1.1, padY);
+        StyleUtil.coverTopWood(c, fork.y);
     }
 
+
+    /**
+     * Small acacia: a short leaning trunk forking into 2-3 limbs, each ending under a full flat
+     * canopy (a wide layer with a narrower one on top) that hides the limb ends.
+     */
+    private static void small(TreeContext c) {
+        int trunkH = c.randInt(3, 4);
+        Vec3 leanDir = Shapes.horizontal(c.randAngle());
+        Vec3 fork = c.base.add(leanDir.scale(c.rand(0.8, 1.6))).add(0, trunkH, 0);
+        Vec3 c1 = c.base.add(0, trunkH * 0.5, 0);
+        Vec3 c2 = c.base.add(leanDir.scale(0.6)).add(0, trunkH * 0.85, 0);
+        Shapes.bezier(c, c.base, c1, c2, fork, 0.5, 0.5, Kind.LOG);
+
+        int limbs = 2 + (c.random.nextFloat() < 0.4f ? 1 : 0);
+        double a0 = c.randAngle();
+        int canopyY = Shapes.floor(fork.y) + c.randInt(1, 2);
+        for (int i = 0; i < limbs; i++) {
+            double ang = a0 + i * TreeContext.TAU / limbs + c.rand(-0.4, 0.4);
+            double len = c.rand(1.5, 2.6);
+            int y = canopyY + (i > 0 && c.random.nextFloat() < 0.35f ? -1 : 0);
+            Vec3 e = fork.add(Shapes.horizontal(ang).scale(len));
+            e = new Vec3(e.x, y + 0.5, e.z);
+            Shapes.limb(c, fork, e, 0.5, 0.5, Kind.LOG);
+            double r = c.rand(2.4, 3.0);
+            StyleUtil.leafDisc(c, e.x, y, e.z, r, 0.25);
+            StyleUtil.leafDisc(c, e.x, y + 1, e.z, r - 1.1, 0.2);
+        }
+        StyleUtil.coverTopWood(c, fork.y);
+    }
     private static void pad(TreeContext c, Vec3 at, double r, double thickness) {
         Shapes.blob(c, at.add(0, thickness * 0.6, 0), r, thickness, r, 0.45, 0.3);
     }

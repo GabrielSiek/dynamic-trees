@@ -2,11 +2,11 @@ package com.grandtrees;
 
 import com.grandtrees.command.GrandTreesCommand;
 import com.grandtrees.config.GrandTreesConfig;
-import com.grandtrees.registry.ModBlocks;
+import com.grandtrees.item.TreeFelling;
 import com.grandtrees.registry.ModItems;
-import com.grandtrees.registry.ModLoot;
 import com.grandtrees.registry.ModWorldgen;
 import com.grandtrees.template.TreeTemplateLoader;
+import com.grandtrees.tree.VanillaSaplingGrowth;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -25,15 +25,16 @@ public class GrandTrees {
 
     public GrandTrees() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
-        ModItems.TABS.register(modBus);
+        modBus.addListener(ModItems::addToTabs);
         ModWorldgen.FEATURES.register(modBus);
         ModWorldgen.PLACEMENTS.register(modBus);
-        ModLoot.SERIALIZERS.register(modBus);
+        ModWorldgen.BIOME_MODIFIERS.register(modBus);
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, GrandTreesConfig.SPEC);
 
+        MinecraftForge.EVENT_BUS.addListener(VanillaSaplingGrowth::onSaplingGrow);
+        MinecraftForge.EVENT_BUS.addListener(TreeFelling::onBreak);
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> GrandTreesCommand.register(e.getDispatcher()));
         MinecraftForge.EVENT_BUS.addListener((AddReloadListenerEvent e) -> e.addListener(new TreeTemplateLoader()));
     }

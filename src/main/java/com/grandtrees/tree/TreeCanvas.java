@@ -254,6 +254,9 @@ public final class TreeCanvas {
                     last = key;
                     continue;
                 }
+                // Never turn the top leaf of a column into wood: the crown must not show wood from above.
+                boolean exposedTop = !has(cx, cy + 1, cz);
+                if (exposedTop && (k == Kind.LEAF || k == null)) return last;
                 if (k == Kind.LEAF || (k == null && emptyOk.test(key)) || k == Kind.DECOR) {
                     set(key, log, Kind.LOG);
                     last = key;

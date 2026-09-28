@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "#grandtrees:has_grand_oak",
+    "#grandtrees:has_grand_birch",
+    "#grandtrees:has_grand_spruce",
+    "#grandtrees:has_grand_jungle",
+    "#grandtrees:has_grand_acacia",
+    "#grandtrees:has_grand_dark_oak",
+    "#grandtrees:has_grand_cherry",
+    "#grandtrees:has_grand_willow"
+  ]
+}

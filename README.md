@@ -5,20 +5,20 @@ clumpy crowns, weeping curtains. Plant more saplings to grow a bigger tree.
 
 ## Getting a tree
 
-Craft a **Tuned Sapling** (shapeless): vanilla sapling + bone meal.
+Plant a **vanilla sapling**. Every sapling below grows a grand tree instead of the vanilla one.
 
-| Tuned sapling | Recipe | Style |
-|---|---|---|
-| Oak | oak sapling + bone meal | round broadleaf, clumpy crown |
-| Birch | birch sapling + bone meal | tall and slender |
-| Spruce | spruce sapling + bone meal | tall conifer with drooping tiers |
-| Jungle | jungle sapling + bone meal | giant on buttress roots, vines, cocoa |
-| Acacia | acacia sapling + bone meal | leaning trunk, wide flat pads |
-| Dark Oak | dark oak sapling + bone meal | twisted fantasy trunk, glow berries |
-| Cherry | cherry sapling + bone meal | wide blossom clouds, petals on the ground |
-| Willow | oak sapling + vine + bone meal | weeping curtains, mangrove-wood trunk |
+| Sapling | Style |
+|---|---|
+| Oak | round broadleaf, clumpy crown |
+| Birch | tall and slender |
+| Spruce | tall conifer with drooping tiers |
+| Jungle | giant on buttress roots, vines, cocoa |
+| Acacia | leaning trunk, wide flat pads |
+| Dark Oak | twisted fantasy trunk, glow berries |
+| Cherry | wide blossom clouds, petals on the ground |
+| Oak, planted in a swamp | willow: weeping curtains, mangrove-wood trunk |
 
-Leaves of vanilla trees also drop a Tuned sapling 1% of the time (not willow).
+Mangrove and azalea saplings grow their vanilla trees as usual.
 
 ## Sizes: plant a pattern
 
@@ -33,38 +33,82 @@ largest complete pattern wins, and all of its saplings are used up.
 | 4x4, or 4x4 without the corners | Large | 23-32 |
 | 5x5, or 5x5 without the corners | Extra Large | 33-46 |
 
+A single dark oak sapling does not grow, just like in vanilla: dark oak starts at 2x2 (Medium).
+
 If there is not enough room, for example under a ceiling or next to another trunk, the tree tries
 the next smaller size, and it does not grow at all if even Small does not fit. Grown trees keep
 their leaves; after you chop the trunk, the leaves decay like vanilla leaves.
 
 ## Natural generation
 
-Grand trees also generate in **newly generated chunks** of matching biomes:
+In **newly generated chunks**, grand trees replace the vanilla trees of these biomes:
 
 - oak: forest, flower forest
 - birch: birch forests
 - spruce: taiga, grove, windswept forest
 - jungle: jungles
 - acacia: savannas
-- dark oak: dark forest
+- dark oak: dark forest (its huge mushrooms go too, they come from the same vanilla feature)
 - cherry: cherry grove
 - willow: swamp
+
+Most natural trees are Medium and Big. Small trees fill the gaps between them, Large ones are a
+little rare, and Extra Large ones are rare and stand spread out (roughly one every dozen forest
+chunks). The weights are in `data/grandtrees/worldgen/configured_feature/<species>.json`.
+
+Other biomes (plains, meadows, mangrove swamps, ...) keep their vanilla trees.
 
 Chunks that already exist are never changed, so adding the mod to an existing world is safe;
 you'll find grand trees when you explore new land.
 
 The biome lists are the tags `grandtrees:has_grand_<species>`, so a data pack can add modded
-biomes (Biomes O' Plenty, Terralith, ...) to them.
+biomes (Biomes O' Plenty, Terralith, ...) to them. Vanilla trees are only removed from vanilla
+biomes; a modded biome keeps its own trees next to the grand ones.
+
+## Forest floor
+
+The grand-tree biomes also get vanilla-block decorations in new chunks:
+
+| Biome | Fallen trunks | Bushes | Rocks |
+|---|---|---|---|
+| Forest | oak, mossy, mushrooms | oak with some azalea leaves | mossy cobblestone, cobblestone, stone |
+| Birch forest | birch | birch | stone, andesite |
+| Taiga, grove | spruce, mossy | spruce | mossy cobblestone, cobblestone, stone (common) |
+| Jungle | jungle, very mossy | many jungle bushes | mossy cobblestone (rare) |
+| Savanna | acacia, dry, with stumps | acacia | granite, stone, andesite |
+| Dark forest | dark oak, mossy, mushrooms | dark oak | mossy cobblestone; huge red and brown mushrooms |
+| Cherry grove | cherry | none | stone, andesite |
+| Swamp | mangrove, mossy, mushrooms | oak | none |
+
+Fallen trunks sometimes lie next to the broken stump they fell from. Snowy biomes cover them in
+snow like any other block. The amounts are in `tools/gen_resources.py` (`DECOR`).
+
+## Lumber Saw
+
+Crafted from 3 iron ingots (top row), a stick and a plank (second row). Cutting a log of a natural
+tree fells the whole tree, roots included, and the wood drops at your feet. Sneak to cut a single
+block. Leaves are left to decay on their own.
+
+Only natural trees fall: the logs have to touch leaves that can decay, and leaves a player placed
+never decay, so log cabins are cut one block at a time. A cut costs 1 durability per 8 logs
+(750 durability, about 4 of the biggest trees). The saw is not an axe for other mods, so axe-based
+tree choppers don't also react to it.
 
 ## Config
 
 `config/grandtrees-common.toml`:
 
 - `worldgen.enabled`: turn natural generation on or off.
-- `worldgen.maxSize`: the largest size world generation places (default `LARGE`).
-- `worldgen.chancePerChunk.<species>`: density, from 0 to 1.
+- `worldgen.replaceVanillaTrees`: remove vanilla trees from the grand-tree biomes (default on;
+  needs a restart).
+- `worldgen.decorations`: fallen trunks, bushes, rocks and huge mushrooms (default on).
+- `worldgen.maxSize`: the largest size world generation places (default `EXTRA_LARGE`).
+- `worldgen.treesPerChunk.<species>`: grand trees attempted per chunk. `2.5` means 2 or 3.
+  Attempts that would overlap another tree grow smaller or are skipped.
+- `growth.vanillaSaplings`: vanilla saplings grow grand trees (default on).
 - `growth.allowRoundPatterns`: accept the corner-less 4x4 and 5x5 patterns.
 - `growth.proceduralWeight`: how often procedural trees are chosen over your templates.
+- `saw.maxLogs`: the most logs one Lumber Saw cut fells (default 2048).
 - `debug.logTreeTiming`: log every tree with its block count and generation time.
 
 ## Commands (operators)
@@ -117,17 +161,18 @@ Requires JDK 17.
 
 `runGameTestServer` does the following:
 
-- Grows every species at every size and checks that no leaf would decay.
-- Checks sapling pattern detection, recipes and loot tables.
+- Grows every species at every size and checks that no leaf would decay, and that spruce,
+  acacia and dark oak crowns show no wood from above.
+- Grows vanilla saplings (a 5x5 oak, a 2x2 dark oak) into grand trees and checks pattern detection.
 - Checks the command, and a template round trip (capture, reload, place).
-- Generates real forest, taiga and swamp chunks and audits every leaf the mod placed.
+- Fells a tree with the Lumber Saw and checks a log wall is left standing.
+- Places every decoration of every species and renders it.
+- Generates real forest, taiga and swamp chunks, audits every leaf the mod placed and counts
+  vanilla leaves left in the biome (should be 0).
 - Writes a front and top view of each tree to `run/gametest-previews/`.
 
 Delete `run/world` before each run so old trees don't block new ones.
 
-The `tools/` folder has three helper scripts:
+`tools/gen_resources.py` regenerates the world generation JSON, biome tags and the Lumber Saw files.
 
-- `gen_resources.py` regenerates the JSON (models, recipes, loot, tags, world generation, lang).
-- `gen_textures.py` regenerates the sapling textures from the vanilla sprites.
-- `check_resources.py` checks that every model and texture reference resolves.
 "# dinamyc-trees" 

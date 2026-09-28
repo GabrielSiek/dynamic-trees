@@ -2,7 +2,7 @@
   "feature": "grandtrees:jungle",
   "placement": [
     {
-      "type": "grandtrees:config_chance",
+      "type": "grandtrees:config_count",
       "species": "jungle"
     },
     {

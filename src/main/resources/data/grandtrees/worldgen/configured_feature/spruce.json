@@ -3,10 +3,11 @@
   "config": {
     "species": "spruce",
     "sizes": {
-      "medium": 3,
-      "big": 4,
-      "large": 3,
-      "extra_large": 1
+      "small": 3,
+      "medium": 60,
+      "big": 60,
+      "large": 7,
+      "extra_large": 2
     }
   }
 }

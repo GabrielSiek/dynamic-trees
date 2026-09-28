@@ -1,0 +1,9 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_willow",
+  "features": [
+    "grandtrees:willow_fallen_log",
+    "grandtrees:willow_bush"
+  ],
+  "step": "vegetal_decoration"
+}

@@ -1,11 +1,4 @@
 {
-  "itemGroup.grandtrees": "Grand Trees",
-  "block.grandtrees.tuned_oak_sapling": "Tuned Oak Sapling",
-  "block.grandtrees.tuned_birch_sapling": "Tuned Birch Sapling",
-  "block.grandtrees.tuned_spruce_sapling": "Tuned Spruce Sapling",
-  "block.grandtrees.tuned_jungle_sapling": "Tuned Jungle Sapling",
-  "block.grandtrees.tuned_acacia_sapling": "Tuned Acacia Sapling",
-  "block.grandtrees.tuned_dark_oak_sapling": "Tuned Dark Oak Sapling",
-  "block.grandtrees.tuned_cherry_sapling": "Tuned Cherry Sapling",
-  "block.grandtrees.tuned_willow_sapling": "Tuned Willow Sapling"
+  "item.grandtrees.lumber_saw": "Lumber Saw",
+  "item.grandtrees.lumber_saw.tooltip": "Fells the whole tree. Sneak to cut a single block."
 }

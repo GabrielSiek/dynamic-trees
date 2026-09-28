@@ -1,0 +1,16 @@
+{
+  "type": "grandtrees:fallen_log",
+  "config": {
+    "log": {
+      "Name": "minecraft:cherry_log",
+      "Properties": {
+        "axis": "y"
+      }
+    },
+    "min_length": 4,
+    "max_length": 6,
+    "moss_chance": 0.1,
+    "mushroom_chance": 0,
+    "stump_chance": 0.4
+  }
+}

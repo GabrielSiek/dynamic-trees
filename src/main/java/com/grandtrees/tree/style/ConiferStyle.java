@@ -5,6 +5,7 @@ import com.grandtrees.tree.TreeContext;
 import com.grandtrees.tree.TreeParams;
 import com.grandtrees.tree.TreeSize;
 import com.grandtrees.tree.geom.Shapes;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -15,6 +16,10 @@ public final class ConiferStyle implements TreeStyle {
 
     @Override
     public void generate(TreeContext c) {
+        if (c.size == TreeSize.SMALL) {
+            small(c);
+            return;
+        }
         TreeParams p = c.params;
         double tr = p.trunkRadius();
         double H = p.height() * c.rand(1.0, 1.15);
@@ -57,9 +62,41 @@ public final class ConiferStyle implements TreeStyle {
             double rr = Math.max(0.6, (H + 2 - y) * 0.45);
             Shapes.blob(c, c.base.add(lean).add(0, y, 0), rr, 0.8, rr, 1.0, 0.2);
         }
-        Shapes.limb(c, top.add(0, -2, 0), top.add(0, 1, 0), 0.5, 0.5, Kind.LOG);
+        Shapes.limb(c, top.add(0, -2, 0), top, 0.5, 0.5, Kind.LOG);
+        StyleUtil.coverTopWood(c, c.base.y + 2);
     }
 
+
+    /**
+     * Small spruce: a straight trunk hidden inside alternating wide and narrow rings of leaves with
+     * drooping edges, ending in a leaf spire (no side branches, no wood on top).
+     */
+    private static void small(TreeContext c) {
+        int bx = Shapes.floor(c.base.x), by = c.baseY(), bz = Shapes.floor(c.base.z);
+        double cx = bx + 0.5, cz = bz + 0.5;
+        int trunkTop = c.params.height() - 1 + c.randInt(0, 1);
+        for (int y = 0; y <= trunkTop; y++) c.canvas.put(bx, by + y, bz, c.log(Direction.Axis.Y), Kind.LOG);
+
+        int first = c.randInt(1, 2);
+        double maxR = c.rand(2.5, 3.1);
+        for (int y = first; y <= trunkTop; y++) {
+            double rel = (double) (y - first) / (trunkTop + 1 - first);
+            double wide = 0.9 + (maxR - 0.9) * Math.pow(1 - rel, 0.85);
+            boolean narrow = (trunkTop - y) % 2 == 0;
+            double r = narrow ? Math.max(1.0, wide * 0.6) : wide;
+            StyleUtil.leafDisc(c, cx, by + y, cz, r, 0.2);
+            if (!narrow && r >= 1.9) {
+                // Tips of the wide rings hang one block lower.
+                for (Direction d : Direction.Plane.HORIZONTAL) {
+                    int n = (int) Math.floor(r);
+                    int x = bx + d.getStepX() * n, z = bz + d.getStepZ() * n;
+                    c.canvas.put(x, by + y - 1, z, c.leaf(x, by + y - 1, z), Kind.LEAF);
+                }
+            }
+        }
+        StyleUtil.leafDisc(c, cx, by + trunkTop + 1, cz, 1.0, 0);
+        c.canvas.put(bx, by + trunkTop + 2, bz, c.leaf(bx, by + trunkTop + 2, bz), Kind.LEAF);
+    }
     private static Vec3 lerp(Vec3 a, Vec3 b, double t) {
         return new Vec3(Shapes.lerp(a.x, b.x, t), Shapes.lerp(a.y, b.y, t), Shapes.lerp(a.z, b.z, t));
     }

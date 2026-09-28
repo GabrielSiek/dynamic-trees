@@ -1,0 +1,9 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_birch",
+  "features": [
+    "grandtrees:birch_fallen_log",
+    "grandtrees:birch_bush"
+  ],
+  "step": "vegetal_decoration"
+}

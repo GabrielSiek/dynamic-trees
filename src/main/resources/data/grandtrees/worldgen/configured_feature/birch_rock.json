@@ -1,0 +1,31 @@
+{
+  "type": "grandtrees:boulder",
+  "config": {
+    "blocks": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "minecraft:stone"
+          },
+          "weight": 3
+        },
+        {
+          "data": {
+            "Name": "minecraft:andesite"
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "minecraft:cobblestone"
+          },
+          "weight": 1
+        }
+      ]
+    },
+    "min_radius": 0.8,
+    "max_radius": 1.8,
+    "moss_chance": 0.1
+  }
+}

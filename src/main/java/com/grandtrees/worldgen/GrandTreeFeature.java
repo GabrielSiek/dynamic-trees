@@ -44,19 +44,12 @@ public class GrandTreeFeature extends Feature<GrandTreeConfiguration> {
                 chunk.getMinBlockX() - 16, level.getMinBuildHeight(), chunk.getMinBlockZ() - 16,
                 chunk.getMaxBlockX() + 16, level.getMaxBuildHeight() - 1, chunk.getMaxBlockZ() + 16);
 
-        // Dense vanilla forests often block the first spot; try a few spots before shrinking.
-        while (size != null) {
-            for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
-                int ax = attempt == 0 ? origin.getX() : chunk.getMinBlockX() + random.nextInt(16);
-                int az = attempt == 0 ? origin.getZ() : chunk.getMinBlockZ() + random.nextInt(16);
-                if (tryAt(level, config, size, ax, az, clip, random)) return true;
-            }
-            size = size.smaller();
-        }
-        return false;
+        // Each placement is one spot (the placed feature makes several per chunk). Without room it
+        // shrinks one size only, so crowded spots don't turn most of a forest into Small trees.
+        if (tryAt(level, config, size, origin.getX(), origin.getZ(), clip, random)) return true;
+        TreeSize smaller = size.smaller();
+        return smaller != null && tryAt(level, config, smaller, origin.getX(), origin.getZ(), clip, random);
     }
-
-    private static final int ATTEMPTS = 3;
 
     private static boolean tryAt(WorldGenLevel level, GrandTreeConfiguration config, TreeSize size, int ax, int az,
                                  BoundingBox clip, RandomSource random) {

@@ -2,7 +2,7 @@
   "feature": "grandtrees:cherry",
   "placement": [
     {
-      "type": "grandtrees:config_chance",
+      "type": "grandtrees:config_count",
       "species": "cherry"
     },
     {

@@ -3,10 +3,11 @@
   "config": {
     "species": "birch",
     "sizes": {
-      "small": 1,
-      "medium": 4,
-      "big": 3,
-      "large": 1
+      "small": 3,
+      "medium": 60,
+      "big": 60,
+      "large": 7,
+      "extra_large": 2
     }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_jungle",
+  "features": [
+    "grandtrees:jungle_rock"
+  ],
+  "step": "local_modifications"
+}

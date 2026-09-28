@@ -2,7 +2,7 @@
   "feature": "grandtrees:dark_oak",
   "placement": [
     {
-      "type": "grandtrees:config_chance",
+      "type": "grandtrees:config_count",
       "species": "dark_oak"
     },
     {

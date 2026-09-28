@@ -1,0 +1,11 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_dark_oak",
+  "features": [
+    "grandtrees:dark_oak_fallen_log",
+    "grandtrees:dark_oak_bush",
+    "grandtrees:dark_oak_huge_red_mushroom",
+    "grandtrees:dark_oak_huge_brown_mushroom"
+  ],
+  "step": "vegetal_decoration"
+}

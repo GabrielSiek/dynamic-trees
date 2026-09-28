@@ -2,7 +2,7 @@
   "feature": "grandtrees:willow",
   "placement": [
     {
-      "type": "grandtrees:config_chance",
+      "type": "grandtrees:config_count",
       "species": "willow"
     },
     {

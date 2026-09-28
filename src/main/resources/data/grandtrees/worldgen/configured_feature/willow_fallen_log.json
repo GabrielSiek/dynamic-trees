@@ -1,0 +1,16 @@
+{
+  "type": "grandtrees:fallen_log",
+  "config": {
+    "log": {
+      "Name": "minecraft:mangrove_log",
+      "Properties": {
+        "axis": "y"
+      }
+    },
+    "min_length": 4,
+    "max_length": 7,
+    "moss_chance": 0.5,
+    "mushroom_chance": 0.3,
+    "stump_chance": 0.3
+  }
+}

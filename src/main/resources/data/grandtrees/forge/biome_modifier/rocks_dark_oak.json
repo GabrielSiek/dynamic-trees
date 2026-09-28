@@ -1,0 +1,8 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#grandtrees:has_grand_dark_oak",
+  "features": [
+    "grandtrees:dark_oak_rock"
+  ],
+  "step": "local_modifications"
+}

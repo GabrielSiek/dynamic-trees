@@ -1,0 +1,16 @@
+{
+  "type": "grandtrees:fallen_log",
+  "config": {
+    "log": {
+      "Name": "minecraft:spruce_log",
+      "Properties": {
+        "axis": "y"
+      }
+    },
+    "min_length": 5,
+    "max_length": 8,
+    "moss_chance": 0.55,
+    "mushroom_chance": 0.2,
+    "stump_chance": 0.5
+  }
+}

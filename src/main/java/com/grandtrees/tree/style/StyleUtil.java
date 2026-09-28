@@ -1,8 +1,12 @@
 package com.grandtrees.tree.style;
 
+import com.grandtrees.tree.TreeCanvas;
 import com.grandtrees.tree.TreeCanvas.Kind;
 import com.grandtrees.tree.TreeContext;
 import com.grandtrees.tree.geom.Shapes;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -77,6 +81,52 @@ final class StyleUtil {
             }
         }
         return ends;
+    }
+
+    /**
+     * One flat layer of leaves. {@code ragged} is the chance of leaving out a cell on the outer
+     * ring, which softens the outline without opening holes inside (cells next to the center are
+     * always kept, so a trunk never shows through).
+     */
+    static void leafDisc(TreeContext c, double cx, int y, double cz, double r, double ragged) {
+        double r2 = r * r + 1e-6;
+        double inner = Math.max(1.0, r - 0.8);
+        for (int x = Shapes.floor(cx - r); x <= Shapes.floor(cx + r); x++) {
+            for (int z = Shapes.floor(cz - r); z <= Shapes.floor(cz + r); z++) {
+                double dx = x + 0.5 - cx, dz = z + 0.5 - cz;
+                double d2 = dx * dx + dz * dz;
+                if (d2 > r2) continue;
+                if (d2 > inner * inner && c.random.nextDouble() < ragged) continue;
+                c.canvas.put(x, y, z, c.leaf(x, y, z), Kind.LEAF);
+            }
+        }
+    }
+
+    /**
+     * Covers every log that would show its top from above (the highest block of its column) with a
+     * small cross of leaves, so the crown never shows wood on top.
+     *
+     * @param minY only logs at or above this height (the crown) are covered
+     */
+    static void coverTopWood(TreeContext c, double minY) {
+        TreeCanvas canvas = c.canvas;
+        Long2LongOpenHashMap highest = new Long2LongOpenHashMap();
+        for (long key : canvas.keys()) {
+            if (canvas.kind(key) == Kind.DECOR) continue;
+            long column = BlockPos.asLong(BlockPos.getX(key), 0, BlockPos.getZ(key));
+            if (!highest.containsKey(column) || BlockPos.getY(key) > BlockPos.getY(highest.get(column))) {
+                highest.put(column, key);
+            }
+        }
+        for (long key : highest.values()) {
+            if (canvas.kind(key) != Kind.LOG || BlockPos.getY(key) < minY) continue;
+            int x = BlockPos.getX(key), y = BlockPos.getY(key) + 1, z = BlockPos.getZ(key);
+            canvas.put(x, y, z, c.leaf(x, y, z), Kind.LEAF);
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                int nx = x + d.getStepX(), nz = z + d.getStepZ();
+                if (!canvas.has(nx, y, nz)) canvas.put(nx, y, nz, c.leaf(nx, y, nz), Kind.LEAF);
+            }
+        }
     }
 
     /** A leader limb from the trunk top up into the crown; returns its tip. */

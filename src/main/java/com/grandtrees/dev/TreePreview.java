@@ -19,14 +19,16 @@ import java.nio.file.Path;
  * block's map color and shaded by depth, into run/gametest-previews/&lt;name&gt;.png.
  */
 public final class TreePreview {
-    private static final int SCALE = 6;
+    /** Pixels per block: small trees are drawn bigger so their shape can be judged. */
+    private static int scale = 6;
 
     private TreePreview() {
     }
 
     public static void render(ServerLevel level, BlockPos center, int radius, int minY, int maxY, String name) {
         int w = radius * 2 + 1, h = maxY - minY + 1;
-        BufferedImage img = new BufferedImage((w * 2 + 2) * SCALE, Math.max(h, w) * SCALE, BufferedImage.TYPE_INT_RGB);
+        scale = Math.max(6, 480 / Math.max(h, w));
+        BufferedImage img = new BufferedImage((w * 2 + 2) * scale, Math.max(h, w) * scale, BufferedImage.TYPE_INT_RGB);
         fill(img, 0x2b2d35);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
 
@@ -78,9 +80,9 @@ public final class TreePreview {
     }
 
     private static void plot(BufferedImage img, int x, int y, int rgb) {
-        for (int i = 0; i < SCALE; i++)
-            for (int j = 0; j < SCALE; j++) {
-                int px = x * SCALE + i, py = y * SCALE + j;
+        for (int i = 0; i < scale; i++)
+            for (int j = 0; j < scale; j++) {
+                int px = x * scale + i, py = y * scale + j;
                 if (px < img.getWidth() && py < img.getHeight()) img.setRGB(px, py, rgb);
             }
     }
